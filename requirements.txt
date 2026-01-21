@@ -1,0 +1,13 @@
+torch
+torchvision
+transformers>=4.38.0
+accelerate
+pillow
+matplotlib
+scipy
+numpy
+wandb
+qwen_vl_utils
+ortools
+pandas
+datasets
