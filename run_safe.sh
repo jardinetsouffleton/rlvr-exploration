@@ -42,4 +42,4 @@ echo "HF_HOME set to: ${HF_HOME}"
 
 # 5. Run Training Script
 echo "Starting training..."
-python "${WORKSPACE_DIR}/train_rlvr.py"
+python "${WORKSPACE_DIR}/train_grpo.py"
