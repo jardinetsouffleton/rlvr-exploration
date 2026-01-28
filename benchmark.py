@@ -2,7 +2,8 @@ import torch
 from transformers import AutoProcessor, AutoModelForVision2Seq, AutoModelForCausalLM, AutoTokenizer
 from tsp_utils import generate_tsp_instance, render_tsp_instance, parse_model_output, calculate_tour_length, solve_tsp_nearest_neighbor, solve_tsp_optimal, get_tsp_prompt
 from sat_utils import generate_sat_instance, get_sat_prompt, parse_sat_output, check_sat_solution, solve_sat_backtracking
-from config import PROBLEM_TYPE, SAT_VARS, SAT_CLAUSES, SAT_VARS_PER_CLAUSE
+from tsp_dual_utils import get_tsp_dual_prompt, parse_dual_bound
+from config import PROBLEM_TYPE, SAT_VARS, SAT_CLAUSES, SAT_VARS_PER_CLAUSE, CLAUSE_RATIO
 from qwen_vl_utils import process_vision_info
 import numpy as np
 from tqdm import tqdm
@@ -14,8 +15,12 @@ def evaluate_model(model, processor, n_instances=50, n_cities=10, device="cuda",
     """
     if PROBLEM_TYPE == "tsp":
         print(f"Running TSP benchmark on {n_instances} instances (N={n_cities})...")
+    elif PROBLEM_TYPE == "tsp_dual":
+        print(f"Running TSP Dual Bound benchmark on {n_instances} instances (N={n_cities})...")
     else:
-        print(f"Running SAT benchmark on {n_instances} instances (Vars={SAT_VARS}, Clauses={SAT_CLAUSES})...")
+        n_vars_used = n_cities if n_cities > 0 else SAT_VARS
+        n_clauses_used = int(n_vars_used * CLAUSE_RATIO)
+        print(f"Running SAT benchmark on {n_instances} instances (Vars={n_vars_used}, Clauses={n_clauses_used})...")
 
     model.eval()
     
@@ -26,6 +31,7 @@ def evaluate_model(model, processor, n_instances=50, n_cities=10, device="cuda",
     total_tokens = 0
     sat_solved_count = 0
     avg_unsat_clauses = 0
+    overestimate_count = 0  # For tsp_dual
     
     # Use fixed seed for reproducibility across runs
     np.random.seed(seed)
@@ -36,6 +42,7 @@ def evaluate_model(model, processor, n_instances=50, n_cities=10, device="cuda",
         coords = None
         clauses = None
         image = None
+        opt_len = None  # Used by both tsp and tsp_dual
         
         if PROBLEM_TYPE == "tsp":
             # Generate Instance
@@ -45,13 +52,25 @@ def evaluate_model(model, processor, n_instances=50, n_cities=10, device="cuda",
             _, opt_len = solve_tsp_optimal(coords)
             # Get NN baseline (optional comparison)
             _, nn_len = solve_tsp_nearest_neighbor(coords)
+        elif PROBLEM_TYPE == "tsp_dual":
+            # Generate Instance and compute optimal
+            coords = generate_tsp_instance(n_cities=n_cities, seed=seeds[i])
+            _, opt_len = solve_tsp_optimal(coords)
         elif PROBLEM_TYPE == "sat":
-             # Use config SAT_VARS if n_cities param is just recycled, or respect n_cities as n_vars?
-             # Let's use n_cities as n_vars for flexibility if passed.
+             # Use n_cities as n_vars for flexibility
              current_n_vars = n_cities if n_cities > 0 else SAT_VARS
-             clauses = generate_sat_instance(n_vars=current_n_vars, n_clauses=SAT_CLAUSES, seed=int(seeds[i]))
-             # No image for now
-             # Create dummy image if needed for logic below
+             current_n_clauses = int(current_n_vars * CLAUSE_RATIO)
+             
+             # Generate solvable instance (retry until we get one)
+             max_attempts = 100
+             for attempt in range(max_attempts):
+                 clauses = generate_sat_instance(n_vars=current_n_vars, n_clauses=current_n_clauses, seed=int(seeds[i]) + attempt)
+                 solution = solve_sat_backtracking(clauses, current_n_vars)
+                 if solution is not None:
+                     break
+             else:
+                 # Fallback: use last generated (might not be solvable)
+                 print(f"Warning: Could not generate solvable instance for n_vars={current_n_vars}")
              pass
         
         # Query Model
@@ -66,6 +85,9 @@ def evaluate_model(model, processor, n_instances=50, n_cities=10, device="cuda",
                     ]
              else:
                   content_payload = get_tsp_prompt(n_cities, coords=coords, mode=PROMPT_MODE)
+        elif PROBLEM_TYPE == "tsp_dual":
+             # Use dual bound prompt - text only
+             content_payload = get_tsp_dual_prompt(n_cities, coords=coords, mode=PROMPT_MODE)
         elif PROBLEM_TYPE == "sat":
              current_n_vars = n_cities if n_cities > 0 else SAT_VARS
              prompt = get_sat_prompt(clauses, current_n_vars, mode=PROMPT_MODE)
@@ -156,6 +178,21 @@ def evaluate_model(model, processor, n_instances=50, n_cities=10, device="cuda",
                     nn_wins += 1
             else:
                 pass
+
+        elif PROBLEM_TYPE == "tsp_dual":
+            # Parse the predicted bound
+            predicted = parse_dual_bound(output_text)
+            
+            if predicted is not None and predicted > 0:
+                valid_count += 1
+                
+                # Gap: (predicted - optimal) / optimal
+                gap = (predicted - opt_len) / opt_len
+                total_gap += abs(gap)
+                
+                # Track overestimation (invalid bound)
+                if predicted > opt_len:
+                    overestimate_count += 1
                 
         elif PROBLEM_TYPE == "sat":
              current_n_vars = n_cities if n_cities > 0 else SAT_VARS
@@ -188,6 +225,25 @@ def evaluate_model(model, processor, n_instances=50, n_cities=10, device="cuda",
             "model_wins": model_wins,
             "avg_tokens": total_tokens / n_instances
         }
+    
+    elif PROBLEM_TYPE == "tsp_dual":
+        # TSP Dual Bound Metrics
+        avg_gap = (total_gap / valid_count * 100) if valid_count > 0 else float('inf')
+        overestimate_rate = (overestimate_count / valid_count * 100) if valid_count > 0 else 0.0
+        
+        print(f"Benchmark Results (N={n_cities}):")
+        print(f"  Validity Rate: {valid_rate:.1f}%")
+        print(f"  Avg Gap from Optimal: {avg_gap:.2f}%")
+        print(f"  Overestimate Rate (invalid bounds): {overestimate_rate:.1f}%")
+        
+        return {
+            "validity_rate": valid_rate,
+            "avg_gap": avg_gap,
+            "overestimate_rate": overestimate_rate,
+            "model_wins": 0,  # Not applicable
+            "avg_tokens": total_tokens / n_instances
+        }
+    
     else:
         # SAT Metrics
         solved_rate = (sat_solved_count / n_instances) * 100

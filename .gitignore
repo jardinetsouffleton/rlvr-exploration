@@ -48,3 +48,7 @@ ENV/
 generated_images/
 jopt-rlvr-test/
 *wandb*
+*.json
+*.jinja
+*.txt
+*.csv

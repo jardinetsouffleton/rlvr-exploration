@@ -237,3 +237,27 @@ def solve_tsp_optimal(coords: np.ndarray) -> tuple[list[int], float]:
         # Fallback to NN if fails (rare for small N)
         return solve_tsp_nearest_neighbor(coords)
 
+
+def save_tsp_instances(instances: list[np.ndarray], filepath: str):
+    """Saves a list of TSP instances (coordinate arrays) to a JSON file."""
+    import json
+    # Convert numpy arrays to lists for JSON serialization
+    serialized = [coords.tolist() for coords in instances]
+    with open(filepath, 'w') as f:
+        json.dump(serialized, f)
+    print(f"Saved {len(instances)} instances to {filepath}")
+
+def load_tsp_instances(filepath: str) -> list[np.ndarray]:
+    """Loads a list of TSP instances from a JSON file."""
+    import json
+    import os
+    if not os.path.exists(filepath):
+        return None
+        
+    with open(filepath, 'r') as f:
+        serialized = json.load(f)
+    
+    # Convert lists back to numpy arrays
+    instances = [np.array(coords) for coords in serialized]
+    print(f"Loaded {len(instances)} instances from {filepath}")
+    return instances

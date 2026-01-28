@@ -7,6 +7,7 @@ This project implements a Reinforcement Learning with Verifiable Rewards (RLVR) 
 - **TRL GRPOTrainer**: Uses HuggingFace TRL's `GRPOTrainer` for efficient reinforcement learning.
 - **Verifiable Rewards**: 
   - **TSP**: Rewards valid tours based on optimality gap vs. Nearest Neighbor/Optimal baselines.
+  - **TSP Dual**: Rewards valid lower bounds on optimal cost (MIP acceleration).
   - **SAT**: Rewards valid variable assignments based on the number of satisfied clauses.
 - **Curriculum Learning**: Linearly scales problem difficulty (e.g., number of variables in SAT) over training steps.
 - **WandB Integration**: Training metrics logged to Weights & Biases.
@@ -72,6 +73,13 @@ source .venv/bin/activate
 python train_grpo.py
 ```
 
+### 4. Running TSP Dual Pipeline
+For the complete TSP Dual training and MIP benchmarking loop:
+```bash
+python run_tsp_dual_pipeline.py --steps 500 --n_cities_min 5 --n_cities_max 10
+```
+This script handles configuration, training, and the final 3-way benchmark (Vanilla vs Base vs Trained).
+
 ## 🧠 Components
 | File | Description |
 | :--- | :--- |
@@ -79,7 +87,11 @@ python train_grpo.py
 | `train_grpo.py` | Main training script using TRL's `GRPOTrainer`. |
 | `sat_utils.py` | Generators and verifiers for SAT problems. |
 | `tsp_utils.py` | Generators, renderers, and verifiers for TSP. |
-| `benchmark.py` | Evaluation logic against baselines (TSP only). |
+| `tsp_dual_utils.py` | Generators and verifiers for TSP Dual Bound problems. |
+| `tsp_mip_solver.py` | MIP solver integration for TSP Dual benchmarks. |
+| `benchmark.py` | Evaluation logic against baselines. |
+| `final_benchmark.py` | Final verification benchmark for TSP Dual. |
+| `run_tsp_dual_pipeline.py` | End-to-end pipeline for TSP Dual training and benchmarking. |
 
 ## 📊 Outputs
 After training, outputs are saved to `OUTPUT_DIR` (configured in `config.py`):
