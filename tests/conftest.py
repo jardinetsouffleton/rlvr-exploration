@@ -35,8 +35,16 @@ def mock_model():
 @pytest.fixture(autouse=True)
 def patch_transformers(mock_tokenizer, mock_model):
     """Automatically patch AutoTokenizer and AutoModelForCausalLM for all tests."""
-    with patch("transformers.AutoTokenizer.from_pretrained", return_value=mock_tokenizer), \
-         patch("transformers.AutoModelForCausalLM.from_pretrained", return_value=mock_model), \
-         patch("transformers.AutoModelForVision2Seq.from_pretrained", return_value=mock_model), \
-         patch("transformers.AutoProcessor.from_pretrained", return_value=mock_tokenizer):
+    from contextlib import ExitStack
+    import transformers
+    
+    with ExitStack() as stack:
+        stack.enter_context(patch("transformers.AutoTokenizer.from_pretrained", return_value=mock_tokenizer))
+        stack.enter_context(patch("transformers.AutoModelForCausalLM.from_pretrained", return_value=mock_model))
+        stack.enter_context(patch("transformers.AutoProcessor.from_pretrained", return_value=mock_tokenizer))
+        
+        # Only patch AutoModelForVision2Seq if it exists (prevents ModuleNotFoundError on older transformers)
+        if hasattr(transformers, "AutoModelForVision2Seq"):
+            stack.enter_context(patch("transformers.AutoModelForVision2Seq.from_pretrained", return_value=mock_model))
+            
         yield
