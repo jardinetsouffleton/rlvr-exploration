@@ -96,21 +96,24 @@ def parse_dual_bound(output_text: str) -> float | None:
 
 
 def calculate_dual_reward(predicted: float, optimal: float, 
-                          overestimate_mult: float = 2.0) -> float:
+                          overestimate_mult: float = 2.0,
+                          overestimate_penalty: float = 0.0) -> float:
     """
     Calculates the reward for a dual bound prediction.
     
     The reward penalizes the gap between predicted and optimal, with
     asymmetric penalties:
     - Underestimation (predicted < optimal): -gap
-    - Overestimation (predicted > optimal): -2*gap (or configurable multiplier)
+    - Overestimation (predicted > optimal): -overestimate_penalty - (overestimate_mult * gap)
     
-    This encourages tight bounds while penalizing invalid (too high) bounds more.
+    This encourages tight bounds while ensuring invalid bounds are strictly worse
+    than even very loose valid bounds.
     
     Args:
         predicted: The predicted lower bound
         optimal: The actual optimal tour length
         overestimate_mult: Penalty multiplier for overestimation (default: 2.0)
+        overestimate_penalty: Flat penalty added if predicted > optimal (default: 0.0)
         
     Returns:
         The reward value (negative, representing penalty)
@@ -121,8 +124,8 @@ def calculate_dual_reward(predicted: float, optimal: float,
     gap = abs((predicted - optimal) / optimal)
     
     if predicted > optimal:
-        # Overestimation - invalid bound, penalize more heavily
-        return -overestimate_mult * gap
+        # Overestimation - invalid bound, penalize heavily (safety first)
+        return -overestimate_penalty - (overestimate_mult * gap)
     else:
         # Underestimation - valid bound, linear penalty for looseness
         return -gap
@@ -171,31 +174,3 @@ def calculate_mst_bound(coords: np.ndarray) -> float:
     return mst_cost
 
 
-def calculate_1tree_bound(coords: np.ndarray) -> float:
-    """
-    Calculates a 1-tree lower bound for TSP.
-    This is generally tighter than the MST bound.
-    
-    A 1-tree is an MST on cities 1..n-1, plus the two shortest edges from city 0.
-    
-    Args:
-        coords: 2D numpy array of city coordinates
-        
-    Returns:
-        1-tree cost as a lower bound
-    """
-    n = len(coords)
-    if n <= 2:
-        return calculate_mst_bound(coords)
-    
-    dist_matrix = np.linalg.norm(coords[:, None] - coords[None, :], axis=-1)
-    
-    # MST on cities 1..n-1
-    remaining_coords = coords[1:]
-    mst_cost = calculate_mst_bound(remaining_coords)
-    
-    # Two shortest edges from city 0
-    edges_from_0 = sorted(dist_matrix[0][1:])
-    two_shortest = edges_from_0[0] + edges_from_0[1] if len(edges_from_0) >= 2 else sum(edges_from_0)
-    
-    return mst_cost + two_shortest

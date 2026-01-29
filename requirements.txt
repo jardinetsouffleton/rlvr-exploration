@@ -11,3 +11,4 @@ qwen_vl_utils
 ortools
 pandas
 datasets
+mip

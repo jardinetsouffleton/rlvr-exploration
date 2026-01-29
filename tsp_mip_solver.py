@@ -208,7 +208,8 @@ def solve_with_llm_bound(
     predicted_bound: float,
     time_limit: float = 60.0,
     gap_tolerance: float = 0.01,
-    use_bound_as_constraint: bool = True
+    use_bound_as_constraint: bool = True,
+    fallback_on_infeasible: bool = True
 ) -> tuple[list[int], float, dict]:
     """
     Solve TSP with an LLM-predicted lower bound to accelerate search.
@@ -223,6 +224,7 @@ def solve_with_llm_bound(
         time_limit: Maximum solve time in seconds
         gap_tolerance: Acceptable optimality gap
         use_bound_as_constraint: If True, add objective >= bound constraint
+        fallback_on_infeasible: If True, retry without bound if infeasible
         
     Returns:
         tuple: (tour, tour_cost, stats)
@@ -238,7 +240,7 @@ def solve_with_llm_bound(
         # This tells the solver: "don't explore solutions cheaper than this"
         # If the bound is valid (underestimate), this helps prune
         # If overestimate, this may cut off the optimal solution!
-        model += obj_expr >= predicted_bound * 0.95  # Small buffer for safety
+        model += obj_expr >= predicted_bound
     
     # Set optimality gap tolerance
     model.max_mip_gap = gap_tolerance
@@ -263,7 +265,7 @@ def solve_with_llm_bound(
                     current = j
                     break
         tour.append(0)
-    elif status == OptimizationStatus.INFEASIBLE:
+    elif status == OptimizationStatus.INFEASIBLE and fallback_on_infeasible:
         # Bound was too tight (overestimate), fallback to unconstrained solve
         return solve_tsp(coords, time_limit, gap_tolerance)
     

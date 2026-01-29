@@ -53,12 +53,9 @@ PROMPT_MODE = "cot" # Options: "cot", "direct"
 TSP_DUAL_MIN_CITIES = 5       # Min cities for training instances
 TSP_DUAL_MAX_CITIES = 10      # Max cities for training instances
 TSP_DUAL_FORMAT_REWARD = 1.0  # Reward for correctly formatted output
-TSP_DUAL_OVERESTIMATE_MULT = 2.0  # Penalty multiplier for overestimation
+TSP_DUAL_OVERESTIMATE_MULT = 20.0  # Penalty multiplier for overestimation
+TSP_DUAL_OVERESTIMATE_PENALTY = 5.0 # Flat penalty for overestimation (worse than 0.0)
 
-# Graph Coloring Config
-GRAPH_NODES = 10
-GRAPH_EDGE_PROB = 0.5
-MIN_COLORS = 3
 
 # SAT Config
 SAT_VARS = 5  # Default/starting size (used when curriculum disabled)
@@ -77,7 +74,3 @@ CLAUSE_RATIO = 2.5      # Clauses-per-variable ratio (4.2 is 3-SAT phase transit
 SAT_BENCHMARK_SIZES = [3, 4, 5, 6, 7, 10, 15, 20]
 SAT_BENCHMARK_INSTANCES = 20
 
-# MIP Solver Config (for TSP dual bound integration)
-MIP_TIME_LIMIT = 60.0      # Maximum solve time in seconds
-MIP_GAP_TOLERANCE = 0.01   # Acceptable optimality gap (1%)
-MIP_FORMULATION = "mtz"    # Subtour elimination: "mtz" (Miller-Tucker-Zemlin)

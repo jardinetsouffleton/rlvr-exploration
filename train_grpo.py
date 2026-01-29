@@ -14,7 +14,7 @@ os.environ["HF_DATASETS_CACHE"] = os.environ.get("HF_DATASETS_CACHE", "/mnt/shar
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = os.environ.get("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 # Import config early to ensure env vars are propagated if config does validation
-from config import MODEL_ID, OUTPUT_DIR, TSP_DATA_DIR, LR, GROUP_SIZE, GENERATION_BATCH_SIZE, STEPS, MAX_NEW_TOKENS, BETA, REWARD_BASELINE, PROMPT_MODE, PROBLEM_TYPE, SAT_VARS, SAT_CLAUSES, SAT_CURRICULUM, SAT_MIN_VARS, SAT_MAX_VARS, SAT_STEP_INTERVAL, SAT_STEP_SIZE, CLAUSE_RATIO, SAT_BENCHMARK_SIZES, SAT_BENCHMARK_INSTANCES, TSP_DUAL_MIN_CITIES, TSP_DUAL_MAX_CITIES, TSP_DUAL_FORMAT_REWARD, TSP_DUAL_OVERESTIMATE_MULT
+from config import MODEL_ID, OUTPUT_DIR, TSP_DATA_DIR, LR, GROUP_SIZE, GENERATION_BATCH_SIZE, STEPS, MAX_NEW_TOKENS, BETA, REWARD_BASELINE, PROMPT_MODE, PROBLEM_TYPE, SAT_VARS, SAT_CLAUSES, SAT_CURRICULUM, SAT_MIN_VARS, SAT_MAX_VARS, SAT_STEP_INTERVAL, SAT_STEP_SIZE, CLAUSE_RATIO, SAT_BENCHMARK_SIZES, SAT_BENCHMARK_INSTANCES, TSP_DUAL_MIN_CITIES, TSP_DUAL_MAX_CITIES, TSP_DUAL_FORMAT_REWARD, TSP_DUAL_OVERESTIMATE_MULT, TSP_DUAL_OVERESTIMATE_PENALTY
 
 import torch
 import logging
@@ -315,7 +315,8 @@ def tsp_dual_reward_func(completions, **kwargs):
         gap_reward = calculate_dual_reward(
             predicted, 
             optimal_cost, 
-            overestimate_mult=TSP_DUAL_OVERESTIMATE_MULT
+            overestimate_mult=TSP_DUAL_OVERESTIMATE_MULT,
+            overestimate_penalty=TSP_DUAL_OVERESTIMATE_PENALTY
         )
         
         # Total reward: format bonus + gap penalty (gap_reward is negative)
