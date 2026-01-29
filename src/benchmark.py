@@ -1,10 +1,10 @@
 import torch
 from transformers import AutoProcessor, AutoModelForVision2Seq, AutoModelForCausalLM, AutoTokenizer
-from tsp_utils import generate_tsp_instance, render_tsp_instance, parse_model_output, calculate_tour_length, solve_tsp_nearest_neighbor, solve_tsp_optimal, get_tsp_prompt
-from sat_utils import generate_sat_instance, get_sat_prompt, parse_sat_output, check_sat_solution, solve_sat_backtracking
-from tsp_dual_utils import get_tsp_dual_prompt, parse_dual_bound
-from tsp_mip_solver import solve_with_llm_bound, solve_tsp
-from config import PROBLEM_TYPE, SAT_VARS, SAT_CLAUSES, SAT_VARS_PER_CLAUSE, CLAUSE_RATIO, MAX_NEW_TOKENS
+from src.tsp_utils import generate_tsp_instance, render_tsp_instance, parse_model_output, calculate_tour_length, solve_tsp_nearest_neighbor, solve_tsp_optimal, get_tsp_prompt
+from src.sat_utils import generate_sat_instance, get_sat_prompt, parse_sat_output, check_sat_solution, solve_sat_backtracking
+from src.tsp_dual_utils import get_tsp_dual_prompt, parse_dual_bound
+from src.tsp_mip_solver import solve_with_llm_bound, solve_tsp
+from src.config import PROBLEM_TYPE, SAT_VARS, SAT_CLAUSES, SAT_VARS_PER_CLAUSE, CLAUSE_RATIO, MAX_NEW_TOKENS
 from qwen_vl_utils import process_vision_info
 import numpy as np
 from tqdm import tqdm
@@ -76,7 +76,7 @@ def evaluate_model(model, processor, n_instances=50, n_cities=10, device="cuda",
              pass
         
         # Query Model
-        from config import PROMPT_MODE # Import here to pick up latest config
+        from src.config import PROMPT_MODE # Import here to pick up latest config
         
         content_payload = []
         if PROBLEM_TYPE == "tsp":
@@ -281,7 +281,7 @@ def evaluate_model(model, processor, n_instances=50, n_cities=10, device="cuda",
 
 if __name__ == "__main__":
     # Standalone run
-    from config import MODEL_ID
+    from src.config import MODEL_ID
     # MODEL_ID = "Qwen/Qwen2.5-VL-3B-Instruct" # manual override
     print(f"Loading {MODEL_ID} for baseline benchmark...")
     

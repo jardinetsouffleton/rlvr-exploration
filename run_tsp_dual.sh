@@ -101,7 +101,7 @@ echo "  Benchmark instances: $BENCHMARK_INSTANCES"
 echo ""
 
 # Run the pipeline
-CMD="python run_tsp_dual_pipeline.py \
+CMD="python -m src.run_tsp_dual_pipeline \
     --steps $STEPS \
     --n_cities_min $N_CITIES_MIN \
     --n_cities_max $N_CITIES_MAX \

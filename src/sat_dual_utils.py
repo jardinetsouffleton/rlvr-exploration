@@ -9,7 +9,7 @@ fixing these variables.
 
 import re
 import numpy as np
-from sat_utils import solve_sat_backtracking
+from src.sat_utils import solve_sat_backtracking
 
 def get_sat_partial_prompt(clauses: list, n_vars: int, mode: str = "cot") -> str:
     """
@@ -65,7 +65,7 @@ def parse_partial_assignment(output_text: str, n_vars: int) -> list[int] | None:
         content_to_parse = answer_match.group(1)
     else:
         # Fallback: look for last non-empty line or just parse text?
-        # Let's trust the logic from sat_utils but applied here
+        # Let's trust the logic from src.sat_utils but applied here
         content_to_parse = output_text
 
     # Extract all numbers

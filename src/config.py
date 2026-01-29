@@ -13,7 +13,7 @@ else:
 from datetime import datetime
 
 # Shared output directory
-BASE_OUTPUT_DIR = "./tsp_dual_output_20260127_191133"
+BASE_OUTPUT_DIR = "./tsp_dual_output_20260129_161130"
 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 OUTPUT_DIR = os.path.join(BASE_OUTPUT_DIR, timestamp)
 

@@ -1,6 +1,6 @@
 
 import sys
-from tsp_dual_utils import calculate_dual_reward
+from src.tsp_dual_utils import calculate_dual_reward
 
 def test_reward():
     opt = 10.0

@@ -8,8 +8,8 @@ Safe Partial Assignments for SAT instances.
 import torch
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from sat_dual_utils import get_sat_partial_prompt, parse_partial_assignment
-from sat_utils import generate_sat_instance, solve_sat_backtracking
+from src.sat_dual_utils import get_sat_partial_prompt, parse_partial_assignment
+from src.sat_utils import generate_sat_instance, solve_sat_backtracking
 
 # Config (could be imported)
 PROMPT_MODE = "cot" 
@@ -123,7 +123,7 @@ def batch_predict(
 
 # Standalone test
 if __name__ == "__main__":
-    from config import MODEL_ID
+    from src.config import MODEL_ID
     
     print(f"Loading model: {MODEL_ID}")
     try:

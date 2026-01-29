@@ -1,4 +1,4 @@
-/mnt/home/rlvr-exploration/final_benchmark.py"""
+"""
 Final Benchmark: Compare MIP solving with different dual-bound oracles.
 
 Compares three approaches:
@@ -17,10 +17,10 @@ import os
 from datetime import datetime
 from tqdm import tqdm
 
-from tsp_utils import generate_tsp_instance, solve_tsp_optimal, save_tsp_instances, load_tsp_instances
-from tsp_dual_utils import calculate_mst_bound
-from tsp_mip_solver import solve_tsp, solve_with_llm_bound
-from tsp_dual_inference import load_model, predict_dual_bound
+from src.tsp_utils import generate_tsp_instance, solve_tsp_optimal, save_tsp_instances, load_tsp_instances
+from src.tsp_dual_utils import calculate_mst_bound
+from src.tsp_mip_solver import solve_tsp, solve_with_llm_bound
+from src.tsp_dual_inference import load_model, predict_dual_bound
 
 
 def run_final_benchmark(
@@ -30,7 +30,7 @@ def run_final_benchmark(
     n_cities: int = 10,
     seed: int = 42,
     time_limit: float = 60.0,
-    time_limit: float = 60.0,
+
     output_dir: str = "final_benchmark",
     data_dir: str = None
 ):

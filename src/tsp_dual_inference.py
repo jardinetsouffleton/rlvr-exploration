@@ -8,8 +8,8 @@ dual (lower) bounds for TSP instances.
 import torch
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from tsp_dual_utils import get_tsp_dual_prompt, parse_dual_bound
-from config import PROMPT_MODE
+from src.tsp_dual_utils import get_tsp_dual_prompt, parse_dual_bound
+from src.config import PROMPT_MODE
 
 
 def load_model(model_path: str, device: str = "auto"):
@@ -147,8 +147,8 @@ def batch_predict_bounds(
 
 # Standalone test
 if __name__ == "__main__":
-    from tsp_utils import generate_tsp_instance, solve_tsp_optimal
-    from config import MODEL_ID
+    from src.tsp_utils import generate_tsp_instance, solve_tsp_optimal
+    from src.config import MODEL_ID
     
     print(f"Loading model: {MODEL_ID}")
     model, tokenizer = load_model(MODEL_ID)

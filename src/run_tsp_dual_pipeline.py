@@ -143,7 +143,7 @@ def main():
         print("-" * 40)
         
         # Import and run training
-        from train_grpo import main as train_main
+        from src.train_grpo import main as train_main
         train_main()
         
         trained_model_path = os.path.join(output_dir, "final")
@@ -162,8 +162,8 @@ def main():
         print(f"[3/3] Running final 3-way MIP benchmark ({args.benchmark_instances} instances)...")
         print("-" * 40)
         
-        from final_benchmark import run_final_benchmark
-        from config import MODEL_ID, TSP_DATA_DIR
+        from src.final_benchmark import run_final_benchmark
+        from src.config import MODEL_ID, TSP_DATA_DIR
         
         # Use middle of training range for benchmark
         benchmark_cities = (args.n_cities_min + args.n_cities_max) // 2

@@ -8,7 +8,7 @@ directly solving for a tour.
 
 import re
 import numpy as np
-from tsp_utils import generate_tsp_instance, solve_tsp_optimal
+from src.tsp_utils import generate_tsp_instance, solve_tsp_optimal
 
 
 def get_tsp_dual_prompt(n_cities: int, coords: np.ndarray, mode: str = "cot") -> str:
@@ -123,6 +123,7 @@ def calculate_dual_reward(predicted: float, optimal: float,
     
     gap = abs((predicted - optimal) / optimal)
     
+    if predicted > optimal:
         # Overestimation - invalid bound, penalize heavily (safety first)
         raw_penalty = -overestimate_penalty - (overestimate_mult * gap)
         # Clip max penalty to avoid exploding gradients/variance (e.g. if gap is huge)

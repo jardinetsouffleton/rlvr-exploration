@@ -3,8 +3,8 @@ Verification script for SAT Dual infrastructure.
 """
 import sys
 import numpy as np
-from sat_utils import generate_sat_instance, solve_sat_backtracking
-from sat_dual_utils import get_sat_partial_prompt, parse_partial_assignment, calculate_partial_assignment_reward
+from src.sat_utils import generate_sat_instance, solve_sat_backtracking
+from src.sat_dual_utils import get_sat_partial_prompt, parse_partial_assignment, calculate_partial_assignment_reward
 
 def test_prompt_generation():
     print("Testing Prompt Generation...")

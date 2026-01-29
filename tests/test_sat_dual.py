@@ -7,9 +7,9 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 
 # Import modules to test
-from sat_utils import generate_sat_instance, solve_sat_backtracking, check_sat_solution
-from sat_dual_utils import get_sat_partial_prompt, parse_partial_assignment, calculate_partial_assignment_reward
-import sat_dual_inference
+from src.sat_utils import generate_sat_instance, solve_sat_backtracking, check_sat_solution
+from src.sat_dual_utils import get_sat_partial_prompt, parse_partial_assignment, calculate_partial_assignment_reward
+from src import sat_dual_inference
 
 class TestSatDual(unittest.TestCase):
 
@@ -112,8 +112,8 @@ class TestSatDual(unittest.TestCase):
         
         print("PASS: Reward logic assigns positive/negative correctly.")
 
-    @patch("sat_dual_inference.AutoTokenizer")
-    @patch("sat_dual_inference.AutoModelForCausalLM")
+    @patch("src.sat_dual_inference.AutoTokenizer")
+    @patch("src.sat_dual_inference.AutoModelForCausalLM")
     def test_05_inference_flow(self, mock_model_cls, mock_tokenizer_cls):
         print("\n=== Test 05: Mock Inference Flow ===")
         

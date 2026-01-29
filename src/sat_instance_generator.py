@@ -12,7 +12,7 @@ import logging
 from typing import Optional
 from collections import defaultdict
 
-from sat_utils import generate_sat_instance, solve_sat_backtracking
+from src.sat_utils import generate_sat_instance, solve_sat_backtracking
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +137,7 @@ class SolvableInstanceGenerator:
             instance = generator._generate_solvable_instance(n_vars, n_clauses)
             if instance is not None:
                 # Double-check solution
-                from sat_utils import check_sat_solution
+                from src.sat_utils import check_sat_solution
                 is_sat, _ = check_sat_solution(instance['clauses'], instance['solution'])
                 if is_sat:
                     success += 1

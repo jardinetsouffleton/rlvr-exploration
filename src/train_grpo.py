@@ -14,7 +14,7 @@ os.environ["HF_DATASETS_CACHE"] = os.environ.get("HF_DATASETS_CACHE", "/mnt/shar
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = os.environ.get("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 # Import config early to ensure env vars are propagated if config does validation
-from config import MODEL_ID, OUTPUT_DIR, TSP_DATA_DIR, LR, GROUP_SIZE, GENERATION_BATCH_SIZE, STEPS, MAX_NEW_TOKENS, BETA, REWARD_BASELINE, PROMPT_MODE, PROBLEM_TYPE, SAT_VARS, SAT_CLAUSES, SAT_CURRICULUM, SAT_MIN_VARS, SAT_MAX_VARS, SAT_STEP_INTERVAL, SAT_STEP_SIZE, CLAUSE_RATIO, SAT_BENCHMARK_SIZES, SAT_BENCHMARK_INSTANCES, TSP_DUAL_MIN_CITIES, TSP_DUAL_MAX_CITIES, TSP_DUAL_FORMAT_REWARD, TSP_DUAL_OVERESTIMATE_MULT, TSP_DUAL_OVERESTIMATE_PENALTY
+from src.config import MODEL_ID, OUTPUT_DIR, TSP_DATA_DIR, LR, GROUP_SIZE, GENERATION_BATCH_SIZE, STEPS, MAX_NEW_TOKENS, BETA, REWARD_BASELINE, PROMPT_MODE, PROBLEM_TYPE, SAT_VARS, SAT_CLAUSES, SAT_CURRICULUM, SAT_MIN_VARS, SAT_MAX_VARS, SAT_STEP_INTERVAL, SAT_STEP_SIZE, CLAUSE_RATIO, SAT_BENCHMARK_SIZES, SAT_BENCHMARK_INSTANCES, TSP_DUAL_MIN_CITIES, TSP_DUAL_MAX_CITIES, TSP_DUAL_FORMAT_REWARD, TSP_DUAL_OVERESTIMATE_MULT, TSP_DUAL_OVERESTIMATE_PENALTY
 
 import torch
 import logging
@@ -28,10 +28,10 @@ from trl import GRPOTrainer, GRPOConfig
 from transformers import TrainerCallback
 
 # Import utils from existing files
-from tsp_utils import generate_tsp_instance, render_tsp_instance, parse_model_output, calculate_tour_length, solve_tsp_nearest_neighbor, solve_tsp_optimal, get_tsp_prompt
-from sat_utils import generate_sat_instance, get_sat_prompt, parse_sat_output, check_sat_solution
-from tsp_dual_utils import get_tsp_dual_prompt, parse_dual_bound, calculate_dual_reward
-from sat_instance_generator import init_instance_pool, get_instance_pool, shutdown_instance_pool
+from src.tsp_utils import generate_tsp_instance, render_tsp_instance, parse_model_output, calculate_tour_length, solve_tsp_nearest_neighbor, solve_tsp_optimal, get_tsp_prompt
+from src.sat_utils import generate_sat_instance, get_sat_prompt, parse_sat_output, check_sat_solution
+from src.tsp_dual_utils import get_tsp_dual_prompt, parse_dual_bound, calculate_dual_reward
+from src.sat_instance_generator import init_instance_pool, get_instance_pool, shutdown_instance_pool
 
 # Global step counter for curriculum (updated via callback)
 _current_step = 0
@@ -481,7 +481,7 @@ def main():
         json.dump(config_data, f, indent=4)
     
     # Benchmarking: Compare base model vs trained model
-    from benchmark import evaluate_model
+    from src.benchmark import evaluate_model
     
     _, ModelClass, _ = get_model_context(MODEL_ID)
     
@@ -612,7 +612,7 @@ def main():
         logging.info("FINAL MIP INTEGRATION BENCHMARK")
         logging.info("=" * 60)
         
-        from final_benchmark import run_final_benchmark
+        from src.final_benchmark import run_final_benchmark
         
         # Run benchmark at multiple sizes within training range
         benchmark_sizes = [TSP_DUAL_MIN_CITIES, TSP_DUAL_MAX_CITIES]

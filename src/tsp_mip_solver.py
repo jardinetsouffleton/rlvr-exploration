@@ -334,8 +334,8 @@ def compare_with_baseline(
 
 # Standalone test
 if __name__ == "__main__":
-    from tsp_utils import generate_tsp_instance, solve_tsp_optimal
-    from tsp_dual_utils import calculate_mst_bound
+    from src.tsp_utils import generate_tsp_instance, solve_tsp_optimal
+    from src.tsp_dual_utils import calculate_mst_bound
     
     print("=== MIP Solver Test ===\n")
     
