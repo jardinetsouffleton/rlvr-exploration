@@ -30,7 +30,7 @@ TSP_DATA_DIR = ".cache/instances/tsp_dual"
 os.makedirs(TSP_DATA_DIR, exist_ok=True)
 
 # 2. Model Configuration
-MODEL_ID = "Qwen/Qwen3-4B-Instruct-2507" 
+MODEL_ID = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B" 
 
 # 3. Training Configuration
 LR = 5e-6

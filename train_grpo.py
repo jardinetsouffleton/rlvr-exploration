@@ -511,7 +511,7 @@ def main():
         # Initialize CSV file with TSP Dual headers
         with open(csv_file_path, mode='w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(['Stage', 'N_Cities', 'Validity_Rate', 'Avg_Gap', 'Overestimate_Rate', 'Avg_Tokens'])
+            writer.writerow(['Stage', 'N_Cities', 'Validity_Rate', 'Avg_Gap', 'Overestimate_Rate', 'Avg_Nodes', 'Avg_Tokens'])
 
         def log_results(stage, size, metrics):
             with open(csv_file_path, mode='a', newline='') as file:
@@ -522,6 +522,7 @@ def main():
                     f"{metrics['validity_rate']:.2f}", 
                     f"{metrics['avg_gap']:.2f}", 
                     f"{metrics.get('overestimate_rate', 0.0):.2f}",
+                    f"{metrics.get('avg_nodes', 0.0):.1f}",
                     f"{metrics['avg_tokens']:.2f}"
                 ])
         

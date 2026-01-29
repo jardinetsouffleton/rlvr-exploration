@@ -3,7 +3,8 @@ from transformers import AutoProcessor, AutoModelForVision2Seq, AutoModelForCaus
 from tsp_utils import generate_tsp_instance, render_tsp_instance, parse_model_output, calculate_tour_length, solve_tsp_nearest_neighbor, solve_tsp_optimal, get_tsp_prompt
 from sat_utils import generate_sat_instance, get_sat_prompt, parse_sat_output, check_sat_solution, solve_sat_backtracking
 from tsp_dual_utils import get_tsp_dual_prompt, parse_dual_bound
-from config import PROBLEM_TYPE, SAT_VARS, SAT_CLAUSES, SAT_VARS_PER_CLAUSE, CLAUSE_RATIO
+from tsp_mip_solver import solve_with_llm_bound, solve_tsp
+from config import PROBLEM_TYPE, SAT_VARS, SAT_CLAUSES, SAT_VARS_PER_CLAUSE, CLAUSE_RATIO, MAX_NEW_TOKENS
 from qwen_vl_utils import process_vision_info
 import numpy as np
 from tqdm import tqdm
@@ -32,6 +33,7 @@ def evaluate_model(model, processor, n_instances=50, n_cities=10, device="cuda",
     sat_solved_count = 0
     avg_unsat_clauses = 0
     overestimate_count = 0  # For tsp_dual
+    total_nodes = 0
     
     # Use fixed seed for reproducibility across runs
     np.random.seed(seed)
@@ -138,7 +140,7 @@ def evaluate_model(model, processor, n_instances=50, n_cities=10, device="cuda",
         with torch.no_grad():
             generated_ids = model.generate(
                 **inputs,
-                max_new_tokens=1024,
+                max_new_tokens=MAX_NEW_TOKENS,
                 do_sample=False, # Deterministic greedy decoding for benchmark
                 temperature=0.0
             )
@@ -194,6 +196,23 @@ def evaluate_model(model, processor, n_instances=50, n_cities=10, device="cuda",
                 if predicted > opt_len:
                     overestimate_count += 1
                 
+                # Run MIP to track nodes
+                # We use a short timeout since these instances are small
+                try:
+                    _, _, stats = solve_with_llm_bound(coords, predicted, time_limit=10.0)
+                    total_nodes += stats.get("nodes_explored", 0)
+                except Exception as e:
+                    # Fallback if solver fails
+                    pass
+            else:
+                # If invalid/failed, we effectively default to vanilla behavior (no bound)
+                # But to keep stats comparable, we should run vanilla or just standard solver
+                try:
+                    _, _, stats = solve_tsp(coords, time_limit=10.0)
+                    total_nodes += stats.get("nodes_explored", 0)
+                except:
+                    pass
+                
         elif PROBLEM_TYPE == "sat":
              current_n_vars = n_cities if n_cities > 0 else SAT_VARS
              assignment = parse_sat_output(output_text, current_n_vars)
@@ -226,20 +245,22 @@ def evaluate_model(model, processor, n_instances=50, n_cities=10, device="cuda",
             "avg_tokens": total_tokens / n_instances
         }
     
-    elif PROBLEM_TYPE == "tsp_dual":
         # TSP Dual Bound Metrics
         avg_gap = (total_gap / valid_count * 100) if valid_count > 0 else float('inf')
         overestimate_rate = (overestimate_count / valid_count * 100) if valid_count > 0 else 0.0
+        avg_nodes = (total_nodes / n_instances)
         
         print(f"Benchmark Results (N={n_cities}):")
         print(f"  Validity Rate: {valid_rate:.1f}%")
         print(f"  Avg Gap from Optimal: {avg_gap:.2f}%")
         print(f"  Overestimate Rate (invalid bounds): {overestimate_rate:.1f}%")
+        print(f"  Avg Nodes Explored: {avg_nodes:.1f}")
         
         return {
             "validity_rate": valid_rate,
             "avg_gap": avg_gap,
             "overestimate_rate": overestimate_rate,
+            "avg_nodes": avg_nodes,
             "model_wins": 0,  # Not applicable
             "avg_tokens": total_tokens / n_instances
         }
