@@ -238,9 +238,10 @@ def solve_with_llm_bound(
     if use_bound_as_constraint and predicted_bound > 0:
         # Add lower bound constraint on objective
         # This tells the solver: "don't explore solutions cheaper than this"
-        # If the bound is valid (underestimate), this helps prune
-        # If overestimate, this may cut off the optimal solution!
-        model += obj_expr >= predicted_bound
+        # SAFETY BUFFER: We relax the bound by 0.1% to avoid cutting off the optimal
+        # solution due to floating point tolerances or extremely minor mispredictions.
+        safe_bound = predicted_bound * 0.999
+        model += obj_expr >= safe_bound
     
     # Set optimality gap tolerance
     model.max_mip_gap = gap_tolerance

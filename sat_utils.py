@@ -119,10 +119,11 @@ def check_sat_solution(clauses: list, assignment: list[int]) -> tuple[bool, floa
     fraction = satisfied_count / len(clauses)
     return (satisfied_count == len(clauses)), fraction
 
-def solve_sat_backtracking(clauses: list, n_vars: int):
+def solve_sat_backtracking(clauses: list, n_vars: int, fixed_assignment: list[int] = None):
     """
     Simple backtracking solver.
     Returns assignment list or None.
+    If fixed_assignment is provided within this scope, it checks if it can be extended to a full solution.
     """
     
     def is_valid(assignment):
@@ -150,6 +151,9 @@ def solve_sat_backtracking(clauses: list, n_vars: int):
         return True
 
     def backtrack(assignment):
+        if not is_valid(assignment):
+            return None
+
         if len(assignment) == n_vars:
             return assignment
             
@@ -160,15 +164,18 @@ def solve_sat_backtracking(clauses: list, n_vars: int):
             next_var += 1
             
         # Try True
-        if is_valid(assignment + [next_var]):
-            res = backtrack(assignment + [next_var])
-            if res: return res
+        res = backtrack(assignment + [next_var])
+        if res: return res
             
         # Try False
-        if is_valid(assignment + [-next_var]):
-            res = backtrack(assignment + [-next_var])
-            if res: return res
+        res = backtrack(assignment + [-next_var])
+        if res: return res
             
         return None
 
-    return backtrack([])
+    initial_assignment = fixed_assignment if fixed_assignment is not None else []
+    # Verify initial assignment validity first
+    if not is_valid(initial_assignment):
+        return None
+        
+    return backtrack(initial_assignment)

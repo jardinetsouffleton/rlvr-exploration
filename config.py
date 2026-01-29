@@ -33,7 +33,7 @@ os.makedirs(TSP_DATA_DIR, exist_ok=True)
 MODEL_ID = "Qwen/Qwen3-4B-Instruct-2507" 
 
 # 3. Training Configuration
-LR = 1e-5
+LR = 5e-6
 GROUP_SIZE = 12
 GENERATION_BATCH_SIZE = 12
 TARGET_TOTAL_BATCH_SIZE = 64

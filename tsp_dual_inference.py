@@ -43,7 +43,8 @@ def predict_dual_bound(
     tokenizer, 
     coords: np.ndarray,
     max_new_tokens: int = 512,
-    temperature: float = 0.0
+    temperature: float = 0.0,
+    max_retries: int = 3
 ) -> float | None:
     """
     Use the model to predict a dual (lower) bound for a TSP instance.
@@ -54,6 +55,7 @@ def predict_dual_bound(
         coords: 2D numpy array of city coordinates (n_cities x 2)
         max_new_tokens: Maximum tokens to generate
         temperature: Sampling temperature (0 = greedy)
+        max_retries: Number of retries if parsing fails (uses sampling for retries)
         
     Returns:
         Predicted lower bound as float, or None if parsing fails
@@ -70,28 +72,44 @@ def predict_dual_bound(
     else:
         text_input = f"User: {prompt}\nAssistant:"
     
-    # Tokenize and generate
+    # Tokenize
     inputs = tokenizer(text_input, return_tensors="pt", padding=True)
     inputs = {k: v.to(model.device) for k, v in inputs.items()}
     
-    with torch.no_grad():
-        generated_ids = model.generate(
-            **inputs,
-            max_new_tokens=max_new_tokens,
-            do_sample=(temperature > 0),
-            temperature=temperature if temperature > 0 else None,
-            pad_token_id=tokenizer.pad_token_id
-        )
-    
-    # Decode output
-    input_len = inputs["input_ids"].shape[1]
-    output_ids = generated_ids[:, input_len:]
-    output_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
-    
-    # Parse the predicted bound
-    predicted = parse_dual_bound(output_text)
-    
-    return predicted
+    # Retry loop
+    for attempt in range(max_retries + 1):
+        # On retries, force sampling if strictly greedy was requested
+        current_temp = temperature
+        do_sample = (temperature > 0)
+        
+        if attempt > 0:
+            # If failed once, try sampling to get different result
+            if current_temp < 0.1:
+                current_temp = 0.7 
+                do_sample = True
+            print(f"  [Retry {attempt}/{max_retries}] Parsing failed, retrying with temp={current_temp}...")
+        
+        with torch.no_grad():
+            generated_ids = model.generate(
+                **inputs,
+                max_new_tokens=max_new_tokens,
+                do_sample=do_sample,
+                temperature=current_temp if do_sample else None,
+                pad_token_id=tokenizer.pad_token_id
+            )
+        
+        # Decode output
+        input_len = inputs["input_ids"].shape[1]
+        output_ids = generated_ids[:, input_len:]
+        output_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
+        
+        # Parse the predicted bound
+        predicted = parse_dual_bound(output_text)
+        
+        if predicted is not None:
+            return predicted
+            
+    return None
 
 
 def batch_predict_bounds(

@@ -123,9 +123,10 @@ def calculate_dual_reward(predicted: float, optimal: float,
     
     gap = abs((predicted - optimal) / optimal)
     
-    if predicted > optimal:
         # Overestimation - invalid bound, penalize heavily (safety first)
-        return -overestimate_penalty - (overestimate_mult * gap)
+        raw_penalty = -overestimate_penalty - (overestimate_mult * gap)
+        # Clip max penalty to avoid exploding gradients/variance (e.g. if gap is huge)
+        return max(raw_penalty, -15.0)
     else:
         # Underestimation - valid bound, linear penalty for looseness
         return -gap
